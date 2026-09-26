@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Student Performance Analytics</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+  <!-- Chart.js via CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <h1>Student Performance & GPA Analytics</h1>
+      <p class="subtitle">Consuming dynamic API data via Flask & Chart.js</p>
+    </header>
+
+    <div class="controls">
+      <button id="loadBtn" onclick="loadAnalytics()">Load / Refresh Data</button>
+      <button id="toggleBtn" onclick="toggleChartType()">Toggle Bar / Line View</button>
+    </div>
+
+    <p id="statusMessage" class="status"></p>
+
+    <!-- Dynamic Chart Section -->
+    <div class="card chart-card">
+      <canvas id="analyticsChart"></canvas>
+    </div>
+
+    <!-- Dynamic Data Table Section -->
+    <div class="card table-card">
+      <h2>Student Overview</h2>
+      <table id="dataTable">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Major</th>
+            <th>GPA (out of 4.0)</th>
+            <th>Attendance (%)</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody">
+          <tr>
+            <td colspan="5" style="text-align: center; color: #888;">Click "Load / Refresh Data" to fetch records.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
