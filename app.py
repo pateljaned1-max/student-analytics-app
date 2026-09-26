@@ -1,40 +1,54 @@
 import os
+import random
 from flask import Flask, jsonify, render_template
 from flask_cors import CORS
 
 app = Flask(__name__)
 CORS(app)
 
-# Dynamic student performance dataset
-STUDENTS_METRICS = [
-    {"id": 1, "name": "Alice Johnson", "major": "Computer Science", "gpa": 3.8, "attendance": 95},
-    {"id": 2, "name": "Bob Smith", "major": "Data Science", "gpa": 3.2, "attendance": 88},
-    {"id": 3, "name": "Charlie Davis", "major": "Software Engineering", "gpa": 3.9, "attendance": 92},
-    {"id": 4, "name": "Diana Prince", "major": "Cybersecurity", "gpa": 3.6, "attendance": 90},
-    {"id": 5, "name": "Evan Wright", "major": "AI & Robotics", "gpa": 3.4, "attendance": 85},
+BASE_STUDENTS = [
+    {"id": 1, "name": "Alice Johnson", "major": "Computer Science"},
+    {"id": 2, "name": "Bob Smith", "major": "Data Science"},
+    {"id": 3, "name": "Charlie Davis", "major": "Software Engineering"},
+    {"id": 4, "name": "Diana Prince", "major": "Cybersecurity"},
+    {"id": 5, "name": "Evan Wright", "major": "AI & Robotics"},
 ]
 
 @app.route("/", methods=["GET"])
 def home():
-    """Serves the dashboard UI."""
     return render_template("index.html")
 
 @app.route("/api/analytics", methods=["GET"])
 def get_analytics():
-    """Returns dynamic data consumed by Chart.js."""
-    labels = [s["name"] for s in STUDENTS_METRICS]
-    gpas = [s["gpa"] for s in STUDENTS_METRICS]
-    attendance = [s["attendance"] for s in STUDENTS_METRICS]
+    students = []
+    labels = []
+    gpas = []
+    attendance = []
+
+    for s in BASE_STUDENTS:
+        current_gpa = round(random.uniform(2.5, 4.0), 2)
+        current_att = random.randint(70, 98)
+        
+        labels.append(s["name"])
+        gpas.append(current_gpa)
+        attendance.append(current_att)
+        
+        students.append({
+            "id": s["id"],
+            "name": s["name"],
+            "major": s["major"],
+            "gpa": current_gpa,
+            "attendance": current_att
+        })
 
     return jsonify({
         "status": "success",
         "labels": labels,
         "gpas": gpas,
         "attendance": attendance,
-        "students": STUDENTS_METRICS
+        "students": students
     }), 200
 
 if __name__ == "__main__":
-    # Render and Heroku bind automatically to the PORT environment variable
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)

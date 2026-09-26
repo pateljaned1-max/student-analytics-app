@@ -1,10 +1,11 @@
 let chartInstance = null;
-let currentChartType = 'bar';
+const availableTypes = ['bar', 'line', 'radar'];
+let currentTypeIndex = 0;
 let cachedData = null;
 
 async function loadAnalytics() {
   const status = document.getElementById("statusMessage");
-  status.textContent = "Fetching analytics data from Flask API...";
+  status.textContent = "Fetching fresh dynamic data from Flask...";
 
   try {
     const response = await fetch("/api/analytics");
@@ -12,78 +13,69 @@ async function loadAnalytics() {
       throw new Error(`HTTP Error: ${response.status}`);
     }
 
-    const data = await response.json();
-    cachedData = data;
-
-    renderChart(data, currentChartType);
-    renderTable(data.students);
-    status.textContent = "Data successfully synchronized!";
+    cachedData = await response.json();
+    renderChart(cachedData, availableTypes[currentTypeIndex]);
+    renderTable(cachedData.students);
+    status.textContent = "Data updated successfully!";
   } catch (error) {
-    status.textContent = "Error fetching data: " + error.message;
+    status.textContent = "Error: " + error.message;
     console.error("Fetch Error:", error);
   }
 }
 
-function renderChart(data, type) {
+function renderChart(data, chartType) {
   const ctx = document.getElementById("analyticsChart").getContext("2d");
 
   if (chartInstance) {
     chartInstance.destroy();
   }
 
+  const isRadar = chartType === 'radar';
+
   chartInstance = new Chart(ctx, {
-    type: type,
+    type: chartType,
     data: {
       labels: data.labels,
       datasets: [
         {
-          label: "Student GPA (Max 4.0)",
-          data: data.gpas,
-          backgroundColor: "rgba(59, 130, 246, 0.7)",
+          label: "Student GPA (Scaled x25 for comparison)",
+          data: data.gpas.map(g => (g * 25).toFixed(1)),
+          backgroundColor: "rgba(59, 130, 246, 0.4)",
           borderColor: "#3b82f6",
           borderWidth: 2,
-          borderRadius: 5,
-          yAxisID: "y"
+          fill: isRadar
         },
         {
           label: "Attendance Rate (%)",
           data: data.attendance,
-          backgroundColor: "rgba(16, 185, 129, 0.5)",
+          backgroundColor: "rgba(16, 185, 129, 0.4)",
           borderColor: "#10b981",
           borderWidth: 2,
-          type: "line",
-          yAxisID: "y1"
+          fill: isRadar
         }
       ]
     },
     options: {
       responsive: true,
-      scales: {
+      plugins: {
+        legend: { labels: { color: "#f8fafc" } }
+      },
+      scales: isRadar ? {
+        r: {
+          ticks: { color: "#94a3b8", backdropColor: "transparent" },
+          grid: { color: "rgba(255, 255, 255, 0.1)" }
+        }
+      } : {
         y: {
-          type: "linear",
-          display: true,
-          position: "left",
-          min: 0,
-          max: 4.0,
-          ticks: { color: "#94a3b8" },
-          grid: { color: "rgba(255, 255, 255, 0.05)" }
-        },
-        y1: {
-          type: "linear",
-          display: true,
-          position: "right",
-          min: 0,
+          beginAtZero: true,
           max: 100,
           ticks: { color: "#94a3b8" },
-          grid: { drawOnChartArea: false }
+          grid: { color: "rgba(255, 255, 255, 0.05)" }
         },
         x: {
           ticks: { color: "#94a3b8" },
           grid: { color: "rgba(255, 255, 255, 0.05)" }
         }
-      },
-      plugins: {
-        legend: { labels: { color: "#f8fafc" } }
       }
     }
   });
@@ -108,9 +100,15 @@ function renderTable(students) {
 
 function toggleChartType() {
   if (!cachedData) return;
-  currentChartType = currentChartType === "bar" ? "line" : "bar";
-  renderChart(cachedData, currentChartType);
+  currentTypeIndex = (currentTypeIndex + 1) % availableTypes.length;
+  const nextType = availableTypes[currentTypeIndex];
+  
+  const toggleBtn = document.getElementById("toggleBtn");
+  if (toggleBtn) {
+    toggleBtn.textContent = `View Mode: ${nextType.toUpperCase()}`;
+  }
+
+  renderChart(cachedData, nextType);
 }
 
-// Automatically load the data on first page load
 document.addEventListener("DOMContentLoaded", loadAnalytics);
